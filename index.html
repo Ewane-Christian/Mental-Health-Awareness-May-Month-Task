@@ -9,6 +9,50 @@
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
+        /* Add these new styles to your existing CSS */
+        .interaction-section {
+            background-color: var(--bs-body-bg);
+            border-radius: 10px;
+            padding: 2rem;
+            margin-top: 3rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .like-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .like-btn:hover {
+            transform: scale(1.1);
+        }
+        .like-btn.liked {
+            color: #e74c3c;
+        }
+        .comments-container {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 1.5rem;
+        }
+        .comment {
+            background-color: rgba(46, 204, 113, 0.05);
+            border-left: 3px solid var(--mental-green);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0 5px 5px 0;
+        }
+        .comment-form {
+            margin-top: 2rem;
+        }
+        .comment-author {
+            font-weight: bold;
+            color: var(--mental-dark-green);
+        }
+        .comment-date {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+        }
         :root {
             --mental-green: #2ecc71;
             --mental-dark-green: #27ae60;
@@ -522,6 +566,43 @@
         </div>
     </div>
 
+    <!-- NEW Interaction Section -->
+    <div class="container interaction-section">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <h3 class="text-center mb-4">Community Support</h3>
+                
+                <!-- Like Button -->
+                <div class="text-center mb-4">
+                    <button id="likeBtn" class="like-btn" aria-label="Like this calendar">
+                        <i class="bi bi-heart"></i>
+                        <span id="likeCount">0</span> Likes
+                    </button>
+                </div>
+                
+                <!-- Comments Section -->
+                <h4 class="mb-3">Encouraging Messages</h4>
+                <div class="comments-container" id="commentsContainer">
+                    <!-- Comments will load here -->
+                </div>
+                
+                <!-- Comment Form -->
+                <form id="commentForm" class="comment-form">
+                    <div class="mb-3">
+                        <label for="commentName" class="form-label">Your Name</label>
+                        <input type="text" class="form-control" id="commentName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="commentText" class="form-label">Your Message</label>
+                        <textarea class="form-control" id="commentText" rows="3" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success">Post Message</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
     <!-- Footer -->
     <footer class="footer">
         <div class="container">
@@ -559,6 +640,69 @@
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Like Functionality
+        const likeBtn = document.getElementById('likeBtn');
+        const likeCount = document.getElementById('likeCount');
+        
+        // Initialize likes from localStorage
+        let likes = localStorage.getItem('calendarLikes') || 0;
+        likeCount.textContent = likes;
+        
+        // Check if user already liked
+        if (localStorage.getItem('userLiked') === 'true') {
+            likeBtn.classList.add('liked');
+            likeBtn.innerHTML = '<i class="bi bi-heart-fill"></i> ' + likes + ' Likes';
+        }
+        
+        likeBtn.addEventListener('click', () => {
+            if (localStorage.getItem('userLiked') === 'true') return;
+            
+            likes++;
+            likeCount.textContent = likes;
+            likeBtn.classList.add('liked');
+            likeBtn.innerHTML = '<i class="bi bi-heart-fill"></i> ' + likes + ' Likes';
+            
+            localStorage.setItem('calendarLikes', likes);
+            localStorage.setItem('userLiked', 'true');
+        });
+
+        // Comments Functionality
+        const commentForm = document.getElementById('commentForm');
+        const commentsContainer = document.getElementById('commentsContainer');
+        
+        // Load comments from localStorage
+        let comments = JSON.parse(localStorage.getItem('calendarComments')) || [];
+        renderComments();
+        
+        commentForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('commentName').value;
+            const text = document.getElementById('commentText').value;
+            
+            const newComment = {
+                name: name,
+                text: text,
+                date: new Date().toLocaleDateString()
+            };
+            
+            comments.unshift(newComment); // Add new comment to beginning
+            localStorage.setItem('calendarComments', JSON.stringify(comments));
+            
+            renderComments();
+            commentForm.reset();
+        });
+        
+        function renderComments() {
+            commentsContainer.innerHTML = comments.map(comment => `
+                <div class="comment">
+                    <div class="comment-author">${comment.name}</div>
+                    <div class="comment-date">${comment.date}</div>
+                    <p>${comment.text}</p>
+                </div>
+            `).join('');
+        }
+
         // Dark mode toggle
         const themeToggle = document.querySelector('.theme-toggle');
         themeToggle.addEventListener('click', () => {
